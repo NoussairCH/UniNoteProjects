@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Courbe d'évolution{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <h1>📈 Courbe d'évolution</h1>
+      <p>Évolution de votre moyenne générale au fil de vos saisies</p>
+    </div>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">← Dashboard</a>
+  </div>
+
+  <div class="card">
+    {% if data == '[]' %}
+    <div style="text-align:center;padding:3rem;color:var(--text-light)">
+      <p style="font-size:1.1rem">Aucune note saisie pour le moment.</p>
+      <a href="{% url 'dashboard' %}" class="btn btn-primary" style="margin-top:1rem">Saisir mes notes</a>
+    </div>
+    {% else %}
+    <div class="chart-container">
+      <canvas id="evolutionChart"></canvas>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if data != '[]' %}
+<script>
+const labels = {{ labels|safe }};
+const data = {{ data|safe }};
+
+new Chart(document.getElementById('evolutionChart'), {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'Moyenne générale (/20)',
+      data: data,
+      borderColor: '#c0392b',
+      backgroundColor: 'rgba(192, 57, 43, 0.1)',
+      tension: 0.3,
+      fill: true,
+      pointBackgroundColor: '#c0392b',
+      pointRadius: 6,
+      pointHoverRadius: 8,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: { min: 0, max: 20, title: { display: true, text: 'Moyenne générale' } },
+      x: { title: { display: true, text: 'Date de saisie' } }
+    },
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: {
+        callbacks: {
+          label: ctx => `Moyenne : ${ctx.parsed.y}/20`
+        }
+      }
+    }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load inscription_tags %}
+{% block title %}Dashboard – UniNotes ERP{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <h1>🏠 Mon Dashboard</h1>
+      <p>Année académique {{ inscription.annee_academique }}</p>
+    </div>
+    {% if not inscription.est_verrouillee %}
+    <a href="{% url 'catalogue' %}" class="btn btn-primary">📚 Composer mon panier</a>
+    {% endif %}
+  </div>
+
+  {% if inscription.est_verrouillee %}
+  <div class="alert alert-lock">🔒 Votre inscription est verrouillée — 60 points atteints. Vos notes seront saisies par votre tuteur.</div>
+  {% else %}
+  <div class="alert alert-warning">⚠️ Inscription ouverte — {{ total_coeff }}/60 pts sélectionnés. <a href="{% url 'catalogue' %}">Compléter mon panier →</a></div>
+  {% endif %}
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value">{{ total_coeff }}<span style="font-size:1rem">/60</span></div>
+      <div class="stat-label">Points de coefficient</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ modules_data|length }}</div>
+      <div class="stat-label">Modules inscrits</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{% if moyenne_generale is not None %}{{ moyenne_generale }}/20{% else %}—{% endif %}</div>
+      <div class="stat-label">Moyenne générale</div>
+    </div>
+    {% if inscription.est_verrouillee %}
+    <div class="stat-card" style="cursor:pointer" onclick="location.href='{% url 'courbe_evolution' %}'">
+      <div class="stat-value">📈</div>
+      <div class="stat-label">Voir ma courbe</div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% for d in modules_data %}
+  <div class="module-dashboard-card">
+    <div class="module-dashboard-header">
+      <div>
+        <strong>{{ d.mc.module_catalogue.intitule }}</strong>
+        <span class="badge badge-secondary" style="margin-left:0.5rem">Coeff. {{ d.mc.module_catalogue.coefficient }}</span>
+      </div>
+      <div>
+        {% if d.moyenne_module is not None %}
+        <span style="font-size:1.3rem;font-weight:700">{{ d.moyenne_module }}/20</span>
+        {% else %}
+        <span style="opacity:0.7;font-size:0.85rem">En attente de notes</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="module-dashboard-body">
+      <table class="notes-table">
+        <thead><tr><th>Catégorie d'évaluation</th><th>Poids</th><th>Note</th></tr></thead>
+        <tbody>
+          {% for cat in d.categories %}
+          {% with note=d.notes_map|dict_get:cat.id %}
+          <tr>
+            <td>{{ cat.nom }}</td>
+            <td><span class="badge badge-info">{{ cat.poids }}%</span></td>
+            <td>{% if note %}<strong style="color:var(--success)">{{ note.valeur }}/20</strong>{% else %}<span style="color:var(--text-light)">—</span>{% endif %}</td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card" style="text-align:center;padding:3rem">
+    <p style="color:var(--text-light)">Vous n'avez pas encore sélectionné de modules.</p>
+    <a href="{% url 'catalogue' %}" class="btn btn-primary" style="margin-top:1rem">Parcourir le catalogue</a>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

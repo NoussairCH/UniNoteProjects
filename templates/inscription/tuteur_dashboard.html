@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Tuteur{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>👨‍🏫 Dashboard Tuteur</h1>
+    <p>Suivi de vos étudiants parrainés (lecture seule)</p>
+  </div>
+  {% if parraines %}
+  <div class="modules-grid">
+    {% for etudiant in parraines %}
+    <div class="card" style="cursor:pointer" onclick="location.href='{% url 'etudiant_detail_tuteur' etudiant.id %}'">
+      <div class="card-header">
+        <span class="card-title">🎓 {{ etudiant.first_name }} {{ etudiant.last_name }}</span>
+        <span class="badge badge-info">Voir →</span>
+      </div>
+      <p style="color:var(--text-light);font-size:0.85rem">{{ etudiant.email }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card" style="text-align:center;padding:3rem">
+    <p style="color:var(--text-light)">Aucun étudiant parrainé pour le moment.</p>
+    <p style="font-size:0.85rem;margin-top:0.5rem">Les étudiants doivent être assignés à votre compte via l'administration.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

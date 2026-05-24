@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load inscription_tags %}
+{% block title %}Saisir les notes – {{ mc.module_catalogue.intitule }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:700px">
+  <div class="page-header">
+    <h1>✏️ Saisir les notes</h1>
+    <p>Étudiant : <strong>{{ etudiant.first_name }} {{ etudiant.last_name }}</strong> &mdash; Module : <strong>{{ mc.module_catalogue.intitule }}</strong> (Coeff. {{ mc.module_catalogue.coefficient }})</p>
+  </div>
+
+  {% if notes_existantes %}
+  <div class="card" style="margin-bottom:1.5rem;background:#f8f9fa">
+    <div class="card-header"><span class="card-title">Notes déjà saisies (définitives)</span></div>
+    <table class="notes-table">
+      <thead><tr><th>Catégorie</th><th>Poids</th><th>Note</th></tr></thead>
+      <tbody>
+        {% for cat in categories %}
+        {% with note=notes_existantes|dict_get:cat.id %}
+        {% if note %}
+        <tr>
+          <td>{{ cat.nom }}</td>
+          <td><span class="badge badge-info">{{ cat.poids }}%</span></td>
+          <td><strong style="color:var(--success)">{{ note.valeur }}/20</strong> <span style="font-size:0.75rem;color:var(--text-light)">🔒</span></td>
+        </tr>
+        {% endif %}
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if categories_disponibles %}
+  <div class="card">
+    <div class="card-header"><span class="card-title">Catégories à saisir</span></div>
+    <form method="post">
+      {% csrf_token %}
+      {% for cat in categories_disponibles %}
+      <div class="form-group">
+        <label>
+          {{ cat.nom }}
+          <span class="badge badge-info" style="margin-left:0.5rem">{{ cat.poids }}%</span>
+        </label>
+        <input type="number" name="note_{{ cat.id }}" class="form-control"
+               min="0" max="20" step="0.01" placeholder="Valeur entre 0 et 20">
+      </div>
+      {% endfor %}
+      <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem">
+        <a href="{% url 'etudiant_detail_tuteur' etudiant.id %}" class="btn btn-secondary">Annuler</a>
+        <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+      </div>
+    </form>
+  </div>
+  <p style="margin-top:0.75rem;font-size:0.83rem;color:var(--text-light);">ℹ️ Une note saisie est définitive et ne peut plus être modifiée.</p>
+  {% else %}
+  <div class="card" style="text-align:center;padding:2rem">
+    <p style="color:var(--success);font-size:1rem;font-weight:600">✅ Toutes les notes de ce module ont été saisies.</p>
+    <a href="{% url 'etudiant_detail_tuteur' etudiant.id %}" class="btn btn-secondary" style="margin-top:1rem">← Retour</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

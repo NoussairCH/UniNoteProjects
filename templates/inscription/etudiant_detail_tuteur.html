@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load inscription_tags %}
+{% block title %}Suivi de {{ etudiant.first_name }} {{ etudiant.last_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <h1>🎓 {{ etudiant.first_name }} {{ etudiant.last_name }}</h1>
+      <p>Saisie et suivi des notes — Tuteur</p>
+    </div>
+    <div style="display:flex;gap:0.75rem">
+      {% if inscription and inscription.est_verrouillee %}
+      <a href="{% url 'courbe_evolution_tuteur' etudiant.id %}" class="btn btn-outline">📈 Courbe d'évolution</a>
+      {% endif %}
+      <a href="{% url 'dashboard' %}" class="btn btn-secondary">← Retour</a>
+    </div>
+  </div>
+
+  {% if not inscription %}
+  <div class="card" style="text-align:center;padding:2rem">
+    <p style="color:var(--text-light)">Cet étudiant n'a pas encore d'inscription.</p>
+  </div>
+  {% elif not inscription.est_verrouillee %}
+  <div class="alert alert-warning">⚠️ L'inscription de cet étudiant n'est pas encore verrouillée ({{ inscription.total_coefficients }}/60 pts). La saisie des notes sera disponible une fois l'inscription verrouillée.</div>
+  {% else %}
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value">{% if moyenne_generale is not None %}{{ moyenne_generale }}/20{% else %}—{% endif %}</div>
+      <div class="stat-label">Moyenne générale</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ modules_data|length }}</div>
+      <div class="stat-label">Modules</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ inscription.get_statut_display }}</div>
+      <div class="stat-label">Statut</div>
+    </div>
+  </div>
+
+  {% for d in modules_data %}
+  <div class="module-dashboard-card">
+    <div class="module-dashboard-header">
+      <div>
+        <strong>{{ d.mc.module_catalogue.intitule }}</strong>
+        <span class="badge badge-secondary" style="margin-left:0.5rem">Coeff. {{ d.mc.module_catalogue.coefficient }}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem">
+        {% if d.moyenne_module is not None %}
+        <span style="font-size:1.3rem;font-weight:700">{{ d.moyenne_module }}/20</span>
+        {% else %}
+        <span style="opacity:0.7;font-size:0.85rem">En attente de notes</span>
+        {% endif %}
+        {% if not d.toutes_saisies %}
+        <a href="{% url 'saisir_notes' d.mc.id %}" class="btn btn-primary btn-sm">✏️ Saisir notes</a>
+        {% else %}
+        <span class="badge badge-success">✅ Complet</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="module-dashboard-body">
+      <table class="notes-table">
+        <thead><tr><th>Catégorie d'évaluation</th><th>Poids</th><th>Note</th></tr></thead>
+        <tbody>
+          {% for cat in d.categories %}
+          {% with note=d.notes_map|dict_get:cat.id %}
+          <tr>
+            <td>{{ cat.nom }}</td>
+            <td><span class="badge badge-info">{{ cat.poids }}%</span></td>
+            <td>{% if note %}<strong style="color:var(--success)">{{ note.valeur }}/20</strong>{% else %}<span style="color:var(--text-light)">Non saisie</span>{% endif %}</td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

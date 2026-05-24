@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Catalogue des modules{% endblock %}
+
+{% block content %}
+{% if inscription and inscription.est_verrouillee %}
+<div style="background:#d5f5e3;border-left:4px solid #27ae60;padding:0.8rem 2rem;font-size:0.9rem;color:#1e8449;font-weight:500;">
+  🔒 Votre inscription est verrouillée. Consultez votre <a href="{% url 'dashboard' %}" style="color:#1e8449">dashboard</a> pour saisir vos notes.
+</div>
+{% else %}
+<div class="panier-bar">
+  <div class="panier-info">
+    <span class="panier-total">Panier : <span>{{ total_coeff }}</span> / 60 pts</span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill {% if total_coeff == 60 %}full{% endif %}" style="width:{% widthratio total_coeff 60 100 %}%"></div>
+    </div>
+    <span style="font-size:0.85rem;opacity:0.8">Restant : {{ reste }} pts</span>
+  </div>
+  <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm">→ Mon dashboard</a>
+</div>
+{% endif %}
+
+<div class="container">
+  <div class="page-header">
+    <h1>📚 Catalogue des modules</h1>
+    <p>Sélectionnez vos modules pour composer votre année (total : exactement 60 points)</p>
+  </div>
+
+  {% if not inscription or not inscription.est_verrouillee %}
+  <div class="modules-grid">
+    {% for module in modules %}
+    <div class="module-card {% if module.id in modules_choisis_ids %}selected{% elif module.coefficient > reste %}disabled{% endif %}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <span class="module-coeff-badge">{{ module.coefficient }} pts</span>
+        {% if module.id in modules_choisis_ids %}<span class="badge badge-success">✓ Ajouté</span>{% endif %}
+      </div>
+      <div class="module-title">{{ module.intitule }}</div>
+      {% if module.description %}<div class="module-desc">{{ module.description }}</div>{% endif %}
+      <div class="cats-list">
+        {% for cat in module.categories.all %}
+        <span class="cat-tag">{{ cat.nom }} {{ cat.poids }}%</span>
+        {% endfor %}
+      </div>
+      {% if user.profile.is_etudiant %}
+        {% if inscription and inscription.est_verrouillee %}
+        {% elif module.id in modules_choisis_ids %}
+        <form method="post" action="{% url 'retirer_module' module.id %}">{% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-sm" style="width:100%">− Retirer</button>
+        </form>
+        {% elif module.coefficient <= reste %}
+        <form method="post" action="{% url 'ajouter_module' module.id %}">{% csrf_token %}
+          <button type="submit" class="btn btn-success btn-sm" style="width:100%">+ Ajouter</button>
+        </form>
+        {% else %}
+        <button class="btn btn-secondary btn-sm" style="width:100%" disabled>Coefficient trop élevé ({{ module.coefficient }} pts)</button>
+        {% endif %}
+      {% endif %}
+    </div>
+    {% empty %}
+    <p style="color:var(--text-light)">Aucun module disponible.</p>
+    {% endfor %}
+  </div>
+
+  {% if modules and not inscription or not inscription.est_verrouillee %}
+  <div class="suggestions-section" style="margin-top:2rem">
+    <div class="suggestions-title">💡 Suggestions (modules compatibles avec {{ reste }} points restants)</div>
+    <div class="suggestions-grid">
+      {% for module in modules %}
+        {% if module.coefficient <= reste and module.id not in modules_choisis_ids %}
+        <div class="suggestion-item">
+          <strong>{{ module.intitule }}</strong> — {{ module.coefficient }} pts
+        </div>
+        {% endif %}
+      {% empty %}
+      <span style="color:var(--text-light);font-size:0.85rem">Aucune suggestion disponible.</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}
