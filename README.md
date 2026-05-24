@@ -47,24 +47,10 @@ pip install -r requirements.txt
 # 4. Appliquer les migrations
 python manage.py migrate
 
-# 5. (Optionnel) Peupler avec les données de test
-python seed_data.py
 
-# 6. Lancer le serveur
+# 5. Lancer le serveur
 python manage.py runserver
 ```
-
-L'application est accessible à l'adresse : **http://127.0.0.1:8000/**
-
-### Comptes de test disponibles (après seed_data.py)
-
-| Nom d'utilisateur | Mot de passe | Rôle | État |
-|---|---|---|---|
-| `admin` | `admin1234` | Superuser | — |
-| `tuteur1` | `tuteur1234` | Tuteur | Parraine les 3 étudiants |
-| `ali_ben_ali` | `etudiant1234` | Étudiant | Inscription verrouillée + notes saisies |
-| `sarra_mrad` | `etudiant1234` | Étudiant | Inscription verrouillée, notes partielles |
-| `omar_triki` | `etudiant1234` | Étudiant | Panier ouvert (non verrouillé) |
 
 ---
 
@@ -141,28 +127,3 @@ La courbe est construite par reconstitution historique : pour chaque date de sai
 
 L'isolation est implémentée **au niveau des vues** (et non seulement des templates) : chaque requête de données filtre systématiquement par `etudiant=request.user`. Le rôle tuteur donne accès en lecture seule uniquement aux étudiants liés via la relation de parrainage.
 
-### 6. Intégrité référentielle — stratégie choisie
-
-Stratégie retenue : **protection par contrainte de clé étrangère** (`on_delete=PROTECT`).  
-Si un administrateur tente de supprimer un module du catalogue déjà sélectionné par des étudiants (`ModuleChoisi`), Django lèvera une `ProtectedError` et refusera la suppression. L'alternative (archivage avec champ `est_actif`) est implémentée en complément : un module peut être désactivé (`est_actif=False`) pour le retirer du catalogue visible sans supprimer les données existantes.
-
----
-
-## Limites connues et perspectives d'amélioration
-
-### Limites actuelles
-
-- La courbe d'évolution utilise une boucle Python pour la dimension temporelle (inévitable pour la logique de reconstitution historique ; les calculs de moyennes à l'intérieur de la boucle utilisent bien l'ORM)
-- Le moteur de recommandation est purement déterministe (filtre sur coefficient ≤ reste) ; pas d'apprentissage ni de personnalisation avancée
-- Pas de pagination sur le catalogue pour les très grands nombres de modules
-- L'assignation tuteur/étudiant se fait uniquement via l'interface d'administration
-
-### Améliorations envisageables
-
-- Pagination AJAX du catalogue et mises à jour du panier sans rechargement de page
-- Export PDF des résultats académiques
-- Système de notifications (email) lors du verrouillage de l'inscription
-- Gestion multi-année académique avec historique des inscriptions
-- Tableau de bord analytique pour le tuteur (comparaison entre étudiants)
-- Tests unitaires et d'intégration (Django TestCase, pytest-django)
-- Déploiement sur serveur de production (Gunicorn + Nginx + PostgreSQL)
